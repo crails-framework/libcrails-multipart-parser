@@ -1,18 +1,19 @@
 #include <crails/server/connection.hpp>
-#include <crails/params.hpp>
+#include <crails/context.hpp>
 #include <crails/logger.hpp>
 #include "multipart_parser.hpp"
 
 using namespace std;
 using namespace Crails;
 
-void RequestMultipartParser::operator()(Connection& connection, BuildingResponse&, Params& params, function<void(RequestParser::Status)> callback) const
+void RequestMultipartParser::operator()(Context& context, function<void(RequestParser::Status)> callback) const
 {
   static const regex is_multipart("^multipart/form-data", regex_constants::extended);
+  const HttpRequest& request = context.connection->get_request();
 
-  if (params["method"].as<string>() != "GET" && content_type_matches(params, is_multipart))
+  if (request.method() != HttpVerb::get && content_type_matches(request, is_multipart))
   {
-    parse_multipart(connection, params, [callback]()
+    parse_multipart(*context.connection, context.params, [callback]()
     {
       callback(RequestParser::Stop);
     });
