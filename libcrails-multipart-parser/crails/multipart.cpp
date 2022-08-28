@@ -1,5 +1,6 @@
 #include <crails/server.hpp>
 #include <crails/utils/string.hpp>
+#include <crails/utils/random_string.hpp>
 #include <crails/params.hpp>
 #include <crails/logger.hpp>
 #include <crails/utils/parse_cookie_values.hpp>

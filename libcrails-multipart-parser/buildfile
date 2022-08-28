@@ -1,5 +1,5 @@
-intf_libs = # Interface dependencies.
-impl_libs = # Implementation dependencies.
+import intf_libs += libcrails%lib{crails}
+import intf_libs += libcrails-random%lib{crails-random}
 
 lib{crails-multipart-parser}: {hxx ixx txx cxx}{**} $impl_libs $intf_libs
 
@@ -12,7 +12,7 @@ cxx.poptions =+  "-I$out_root" "-I$src_root"
 
 lib{crails-multipart-parser}:
 {
-  cxx.export.poptions = "-I$out_root" "-I$src_root"
+  cxx.export.poptions = "-I$out_root/libcrails-multipart-parser/" "-I$src_root/libcrails-multipart-parser/"
   cxx.export.libs = $intf_libs
 }
 
@@ -26,6 +26,6 @@ else
 
 {hxx ixx txx}{*}:
 {
-  install         = include/crails/
+  install         = include/
   install.subdirs = true
 }

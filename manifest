@@ -2,10 +2,10 @@
 name: libcrails-multipart-parser
 version: 2.0.0
 summary: crails-multipart-parser C++ library
-license: BSD-C3
+license: BSD-3-Clause
 description-file: README.md
 url: https://github.com/crails-framework/libcrails-multipart-parser
 email: michael@unetresgrossebite.com
 depends: * build2 >= 0.15.0
 depends: * bpkg >= 0.15.0
-depends: libcrails ^2.0.0
+depends: { libcrails libcrails-random } ^2.0.0
