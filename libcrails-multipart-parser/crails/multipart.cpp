@@ -38,17 +38,12 @@ void MultipartParser::parse(Params& params)
     }
     if (parsed_state == 1)
     {
-      regex reg("([^\r]+)\r\n", regex_constants::ECMAScript);
-      auto matches = sregex_iterator(read_buffer.begin(),  read_buffer.end(), reg);
+      static const string delimiter("\r\n");
+      size_t form_len = read_buffer.find(delimiter);
 
-      if (distance(matches, sregex_iterator()) > 0)
+      if (form_len != std::string::npos)
       {
-        smatch       match    = *matches;
-        unsigned int form_so  = match.position(1);
-        unsigned int form_len = match.length(1);
-        unsigned int form_end = match.length(0);
-
-        parse_cookie_values(read_buffer.substr(form_so, form_len), [this](const string& key, const string& val) -> bool
+        parse_cookie_values(read_buffer.substr(0, form_len), [this](const string& key, const string& val) -> bool
         {
           content_data[key] = val;
           return true;
@@ -64,7 +59,7 @@ void MultipartParser::parse(Params& params)
           data = str;
 	  return true;
         });
-        read_buffer.erase(0, form_end);
+        read_buffer.erase(0, form_len + delimiter.length());
         parsed_state++;
       }
     }
