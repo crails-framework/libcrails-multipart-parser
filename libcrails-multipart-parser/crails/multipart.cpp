@@ -131,7 +131,7 @@ void MultipartParser::parse(Params& params)
 
         if (!(file.is_open()))
         {
-          content_data["filepath"] = Server::temporary_path + '/' + Crails::generate_random_string("ABCDEF012345556789", 12);
+          content_data["filepath"] = Server::singleton::require().get_temporary_path() + '/' + Crails::generate_random_string("ABCDEF012345556789", 12);
           file.open(content_data["filepath"].as<std::string>());
           if (!(file.is_open()))
             logger << Logger::Info << "/!\\ Cannot open file " << content_data["filepath"].as<string>() << Logger::endl;
