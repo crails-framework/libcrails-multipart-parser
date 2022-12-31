@@ -93,23 +93,18 @@ void MultipartParser::parse(Params& params)
           string field = content_data["name"];
           string value = read_buffer.substr(0, pos - 4);
           string ptree_key;
-          bool   is_array = false;
 
           // From CGI parameter to Ptree parameter
           for (size_t i = 0 ; i < field.length() ; ++i)
           {
             if (field[i] == '[')
-            {
-              if (field[i] + 1 == ']')
-                is_array = true;
-              else
-                ptree_key += '.';
-            }
+              ptree_key += '.';
             else if (field[i] != ']')
               ptree_key += field[i];
           }
-          if (is_array)
+          if (*ptree_key.rbegin() == '.') // is array ?
           {
+            ptree_key.pop_back();
             if (params[ptree_key].exists())
               params[ptree_key].push_back(value);
             else
