@@ -4,6 +4,7 @@
 #include <crails/params.hpp>
 #include <crails/logger.hpp>
 #include <crails/utils/parse_cookie_values.hpp>
+#include <boost/lexical_cast.hpp>
 #include "multipart.hpp"
 #include <fstream>
 #include <regex>
@@ -158,14 +159,34 @@ void MultipartParser::parse(Params& params)
   } while (!blocked);
 }
 
-void MultipartParser::initialize(Params& params)
+static string_view get_content_type(const HttpRequest& request)
 {
-  string     type     = params["headers"]["Content-Type"].as<std::string>();
-  regex      get_boundary("boundary=(.*)", regex_constants::ECMAScript);
-  auto       matches  = sregex_iterator(type.begin(), type.end(), get_boundary);
-  smatch     match    = *matches;
+  auto field = request.find(HttpHeader::content_type);
 
-  to_read      = params["headers"]["Content-Length"];
+  if (field != request.end())
+    return string_view(field->value().data(), field->value().length());
+  return string_view();
+}
+
+static unsigned int get_content_length(const HttpRequest& request)
+{
+  auto field = request.find(HttpHeader::content_length);
+
+  if (field != request.end())
+    return boost::lexical_cast<unsigned int>(field->value());
+  return 0;
+}
+
+void MultipartParser::initialize(Context& context)
+{
+  optional<uint64_t> content_length;
+  const auto& request = context.connection->get_request();
+  string      type(get_content_type(request));
+  regex       get_boundary("boundary=(.*)", regex_constants::ECMAScript);
+  auto        matches  = sregex_iterator(type.begin(), type.end(), get_boundary);
+  smatch      match    = *matches;
+
+  to_read      = get_content_length(request);
   total_read   = 0;
   boundary     = type.substr(match.position(1), match.length(1));
   parsed_state = 0;

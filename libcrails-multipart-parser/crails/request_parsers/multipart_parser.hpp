@@ -6,16 +6,18 @@
 
 namespace Crails
 {
+  class Context;
+
   class RequestMultipartParser : public RequestParser
   {
   public:
     void operator()(Context&, std::function<void(RequestParser::Status)>) const override;
   private:
-    void parse_multipart(Connection&, Params&, std::function<void()>) const;
+    void parse_multipart(Context&, std::function<void()>) const;
 
     struct PendingBody
     {
-      PendingBody(Connection&, Params&);
+      PendingBody(Context&);
 
       Connection&            connection;
       Params&                params;
@@ -23,7 +25,7 @@ namespace Crails
       std::function<void()>  finished_callback;
     };
 
-    void on_receive(std::shared_ptr<PendingBody>, Connection&) const;
+    void on_receive(std::shared_ptr<PendingBody>, Context&, std::string_view chunk) const;
   };
 }
 

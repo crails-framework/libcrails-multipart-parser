@@ -13,7 +13,7 @@ void RequestMultipartParser::operator()(Context& context, function<void(RequestP
 
   if (request.method() != HttpVerb::get && content_type_matches(request, is_multipart))
   {
-    parse_multipart(*context.connection, context.params, [callback]()
+    parse_multipart(context, [callback]()
     {
       callback(RequestParser::Stop);
     });
@@ -22,32 +22,34 @@ void RequestMultipartParser::operator()(Context& context, function<void(RequestP
     callback(RequestParser::Continue);
 }
 
-RequestMultipartParser::PendingBody::PendingBody(Connection& c, Params& p)
-  : connection(c), params(p)
+RequestMultipartParser::PendingBody::PendingBody(Context& c)
+  :
+  connection(*c.connection),
+  params(c.params)
 {
-  multipart_parser.initialize(params);
+  multipart_parser.initialize(c);
 }
 
-void RequestMultipartParser::on_receive(shared_ptr<PendingBody> pending_body, Connection& connection) const
+void RequestMultipartParser::on_receive(shared_ptr<PendingBody> pending_body, Context& context, std::string_view chunk) const
 {
   MultipartParser& multipart_parser = pending_body->multipart_parser;
-  const string& body = connection.get_request().body();
-  unsigned int offset = multipart_parser.read_buffer.length();
 
-  multipart_parser.total_read = body.length();
-  for (unsigned int i = 0 ; i < body.length() - offset ; ++i)
-    multipart_parser.read_buffer += body[i + offset];
+  multipart_parser.total_read += chunk.length();
+  copy(chunk.begin(), chunk.end(), back_inserter(multipart_parser.read_buffer));
   multipart_parser.parse(pending_body->params);
-  if (multipart_parser.total_read < multipart_parser.to_read)
-    throw std::runtime_error("RequestMutlipartParser: Asynchronous body reception not implemented");
-  else
+  if (multipart_parser.total_read >= multipart_parser.to_read)
     pending_body->finished_callback();
 }
 
-void RequestMultipartParser::parse_multipart(Connection& connection, Params& params, function<void()> finished_callback) const
+void RequestMultipartParser::parse_multipart(Context& context, function<void()> finished_callback) const
 {
-  shared_ptr<PendingBody> pending_body = make_shared<PendingBody>(connection, params);
+  shared_ptr<PendingBody> pending_body = make_shared<PendingBody>(context);
+  auto connection = context.connection;
+  const auto& request = connection->get_request();
 
   pending_body->finished_callback = finished_callback;
-  on_receive(pending_body, connection);
+  connection->on_received_body_chunk([this, &context, pending_body](string_view chunk)
+  {
+    on_receive(pending_body, context, chunk);
+  });
 }

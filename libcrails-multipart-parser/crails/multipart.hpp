@@ -1,7 +1,7 @@
 #ifndef  CRAILS_MULTIPART_HPP
 # define CRAILS_MULTIPART_HPP
 
-# include <crails/params.hpp>
+# include <crails/context.hpp>
 # include <fstream>
 
 namespace Crails
@@ -10,7 +10,7 @@ namespace Crails
 
   struct MultipartParser
   {
-    void         initialize(Params&);
+    void         initialize(Context&);
     void         parse(Params&);
 
     std::string  read_buffer;
